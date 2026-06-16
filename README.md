@@ -57,8 +57,8 @@ See `data/README.md` for the same layout in the data folder.
 Checkpoint download links:
 
 ```text
-Gao_SHNU_task7_1_D2_dictionary.pth: TODO
-Gao_SHNU_task7_1_D3_dictionary.pth: TODO
+Gao_SHNU_task7_1_D2_dictionary.pth: https://drive.google.com/file/d/1y00TLlw0vAc0XOPMyM0uSz5zYzEIjNvP/view?usp=sharing
+Gao_SHNU_task7_1_D3_dictionary.pth: https://drive.google.com/file/d/1hdaG1_HZBktGDEuiJKCwroHUP_0AqIVC/view?usp=sharing
 ```
 
 For GitHub-style local reproduction:
