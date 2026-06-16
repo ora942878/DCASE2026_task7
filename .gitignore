@@ -1,0 +1,31 @@
+# Local datasets and generated data.
+data/**
+!data/
+!data/README.md
+!data/.gitkeep
+!data/D2/
+!data/D2/.gitkeep
+!data/D3/
+!data/D3/.gitkeep
+!data/eval/
+!data/eval/.gitkeep
+
+# Large checkpoint files.
+*.pth
+!checkpoints/
+!checkpoints/official/
+!checkpoints/official/.gitkeep
+!checkpoints/ours/
+!checkpoints/ours/.gitkeep
+
+# Generated inference outputs and logs.
+code/final_eval/submission/*/*_manifest.json
+code/final_eval/submission/*/*_preview.csv
+code/DCASE_V2_mainline_scripts/runs/
+
+# Python and editor caches.
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.idea/
+.vscode/

@@ -1,0 +1,74 @@
+# Submission information
+submission:
+  label: Gao_SHNU_task7_1
+
+  name: Augmentation-driven checkpoint averaging for DCASE 2026 Task 7
+  abbreviation: SPAvg
+
+  authors:
+    - firstname: Jiajun
+      lastname: Sun
+      email: ora942878@gmail.com
+      corresponding: false
+      affiliation:
+        institution: Shanghai Normal University
+        department: Information and Telecommunication Engineering
+        location: Shanghai, China
+
+    - firstname: Zhe
+      lastname: Gao
+      email: zgao0911@shnu.edu.cn
+      corresponding: true
+      affiliation:
+        institution: Shanghai Normal University
+        department: Information and Telecommunication Engineering
+        location: Shanghai, China
+
+system:
+  description:
+    data_augmentation: combine audio segments from the same class, randomly shift audio in time, randomly change audio volume
+    catastrophic_forgetting_handling: train several models with different augmented data, average their checkpoint updates, keep part of the previous checkpoint, copy BatchNorm statistics from the previous stage
+    domain_specific_components: false
+
+  source_code: !!null
+
+results:
+  development_dataset:
+    Step2:
+      Domain2:
+        average: 73.41
+
+        alarm: 65.38
+        dog: 86.96
+        engine: 88.41
+        fire: 47.22
+        footsteps: 77.55
+        knock: 88.89
+        piano: 67.01
+        speech: 65.83
+
+    Step3:
+      Domain2:
+        average: 63.53
+
+        alarm: 50.77
+        dog: 95.65
+        engine: 55.07
+        fire: 41.67
+        footsteps: 95.92
+        knock: 38.89
+        piano: 64.95
+        speech: 65.33
+
+      Domain3:
+        average: 67.08
+
+        alarm: 70.97
+        baby: 70.83
+        dog: 64.94
+        engine: 84.71
+        fire: 45.95
+        footsteps: 67.16
+        phone: 61.29
+        piano: 97.26
+        speech: 40.64
