@@ -19,7 +19,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT = SCRIPT_DIR.parent
 CODE_ROOT = ROOT.parent
 RELEASE_ROOT = CODE_ROOT.parent
-PROJECT_ROOT = CODE_ROOT / "DCASE_CODE_V2"
+PROJECT_ROOT = CODE_ROOT / "base"
 FINAL_EVAL_ROOT = CODE_ROOT / "final_eval"
 if str(FINAL_EVAL_ROOT) not in sys.path:
     sys.path.insert(0, str(FINAL_EVAL_ROOT))
@@ -344,6 +344,7 @@ def main() -> None:
             "center_name": config["center_name"],
             "centers": config["centers"],
             "mode": config["mode"],
+            "task_id": args.task_id,
             "D2_wav": d2,
             "D3_wav": d3,
             "avg_D2_D3_wav_official_acc": (d2["official_domain_acc"] + d3["official_domain_acc"]) / 2.0,
@@ -355,6 +356,7 @@ def main() -> None:
             "window_sec": "" if config["window_sec"] is None else config["window_sec"],
             "center_name": config["center_name"],
             "mode": config["mode"],
+            "task_id": args.task_id,
             "D2_wav_official_acc": d2["official_domain_acc"] * 100,
             "D3_wav_official_acc": d3["official_domain_acc"] * 100,
             "avg_D2_D3_wav_official_acc": result["avg_D2_D3_wav_official_acc"] * 100,
@@ -368,7 +370,7 @@ def main() -> None:
         rows.append(row)
         write_summary(rows, out_dir)
         print(
-            "{tag:28s} D2={D2_wav_official_acc:6.2f}% "
+            "{tag:28s} task={task_id} D2={D2_wav_official_acc:6.2f}% "
             "D3={D3_wav_official_acc:6.2f}% avg={avg_D2_D3_wav_official_acc:6.2f}%".format(**row),
             flush=True,
         )

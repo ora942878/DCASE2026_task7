@@ -11,16 +11,14 @@ import torch
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-ROOT = SCRIPT_DIR.parent
+PIPELINE_ROOT = SCRIPT_DIR.parent
+ROOT = PIPELINE_ROOT.parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from train_full_ft_d3_bn2 import (  # noqa: E402
+from train_stage_path import (  # noqa: E402
     CKPT_ROOT,
-    D2_TEST_CSV,
-    D2_TEST_WAV,
-    D3_TEST_CSV,
-    D3_TEST_WAV,
+    TESTS,
     build_model,
     eval_wavlevel,
     load_state_dict,
@@ -131,42 +129,68 @@ def combine_stage(
     return out
 
 
-def evaluate_state(name: str, state: dict[str, torch.Tensor], task_id: int, device: torch.device, out_dir: Path) -> dict:
+def eval_task_map(mode: str, target_task_id: int) -> dict[str, int]:
+    if mode == "fixed-target":
+        return {"D2": target_task_id, "D3": target_task_id}
+    raise ValueError(f"Unsupported eval mode: {mode}")
+
+
+def evaluate_state(
+    name: str,
+    state: dict[str, torch.Tensor],
+    task_ids: dict[str, int],
+    eval_mode: str,
+    device: torch.device,
+    out_dir: Path,
+) -> dict:
     model = build_model().to(device)
     model.load_state_dict(state)
     model.eval()
+    d2_wav, d2_csv, _d2_task = TESTS["D2"]
+    d3_wav, d3_csv, _d3_task = TESTS["D3"]
     result = {
         "name": name,
-        "task_id": task_id,
-        "D2_wav": eval_wavlevel(model, D2_TEST_WAV, D2_TEST_CSV, device, task_id=task_id, name=f"{name}:D2", no_progress=True),
-        "D3_wav": eval_wavlevel(model, D3_TEST_WAV, D3_TEST_CSV, device, task_id=task_id, name=f"{name}:D3", no_progress=True),
+        "eval_mode": eval_mode,
+        "task_ids": task_ids,
+        "D2_wav": eval_wavlevel(model, d2_wav, d2_csv, device, task_id=task_ids["D2"], name=f"{name}:D2", no_progress=True),
+        "D3_wav": eval_wavlevel(model, d3_wav, d3_csv, device, task_id=task_ids["D3"], name=f"{name}:D3", no_progress=True),
     }
     result["avg_D2_D3_wav_official_acc"] = (
         result["D2_wav"]["official_domain_acc"] + result["D3_wav"]["official_domain_acc"]
     ) / 2.0
-    (out_dir / f"{name}.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+    (out_dir / f"{name}_{eval_mode}.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+    if eval_mode == "fixed-target":
+        (out_dir / f"{name}.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
     return result
 
 
-def write_summary(result: dict, out_dir: Path) -> None:
-    row = {
+def result_row(result: dict) -> dict:
+    return {
         "name": result["name"],
-        "task_id": result["task_id"],
+        "eval_mode": result["eval_mode"],
+        "task_id": result["task_ids"]["D2"] if result["task_ids"]["D2"] == result["task_ids"]["D3"] else "",
+        "D2_task_id": result["task_ids"]["D2"],
+        "D3_task_id": result["task_ids"]["D3"],
         "D2_wav_official_acc": result["D2_wav"]["official_domain_acc"] * 100,
         "D3_wav_official_acc": result["D3_wav"]["official_domain_acc"] * 100,
         "avg_D2_D3_wav_official_acc": result["avg_D2_D3_wav_official_acc"] * 100,
         "D2_wav_sample_acc": result["D2_wav"]["sample_acc"] * 100,
         "D3_wav_sample_acc": result["D3_wav"]["sample_acc"] * 100,
     }
+
+
+def write_summary(results: list[dict], out_dir: Path) -> None:
+    rows = [result_row(result) for result in results]
     with (out_dir / "summary.csv").open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=list(row.keys()))
+        writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         writer.writeheader()
-        writer.writerow(row)
-    print(
-        "{name:28s} task={task_id} D2={D2_wav_official_acc:6.2f}% "
-        "D3={D3_wav_official_acc:6.2f}% avg={avg_D2_D3_wav_official_acc:6.2f}%".format(**row),
-        flush=True,
-    )
+        writer.writerows(rows)
+    for row in rows:
+        print(
+            "{name:28s} {eval_mode:13s} D2(task={D2_task_id})={D2_wav_official_acc:6.2f}% "
+            "D3(task={D3_task_id})={D3_wav_official_acc:6.2f}% avg={avg_D2_D3_wav_official_acc:6.2f}%".format(**row),
+            flush=True,
+        )
 
 
 def main() -> None:
@@ -179,6 +203,7 @@ def main() -> None:
     parser.add_argument("--beta", type=float, default=0.8)
     parser.add_argument("--checkpoint-name", required=True)
     parser.add_argument("--eval-name", required=True)
+    parser.add_argument("--eval-mode", choices=["fixed-target"], default="fixed-target")
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
 
@@ -201,6 +226,7 @@ def main() -> None:
         "source_task_id": args.source_task_id,
         "target_task_id": args.target_task_id,
         "beta": args.beta,
+        "eval_mode": args.eval_mode,
         "formula": {
             "shared_weights": "anchor + beta * (mean(paths) - anchor)",
             "target_bn": "source BN branch from anchor is mapped to target BN branch, then combined with target BN branches from paths",
@@ -212,8 +238,19 @@ def main() -> None:
     }
     (out_dir / "meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
-    result = evaluate_state(args.eval_name, combined, args.target_task_id, device, out_dir)
-    write_summary(result, out_dir)
+    eval_modes = [args.eval_mode]
+    results = [
+        evaluate_state(
+            args.eval_name,
+            combined,
+            eval_task_map(mode, args.target_task_id),
+            mode,
+            device,
+            out_dir,
+        )
+        for mode in eval_modes
+    ]
+    write_summary(results, out_dir)
     print(f"Saved checkpoint: {checkpoint_path}", flush=True)
     print(f"Saved to: {out_dir}", flush=True)
 

@@ -19,10 +19,11 @@ from tqdm import tqdm
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-MAINLINE_ROOT = SCRIPT_DIR.parent
+PIPELINE_ROOT = SCRIPT_DIR.parent
+MAINLINE_ROOT = PIPELINE_ROOT.parent
 CODE_ROOT = MAINLINE_ROOT.parent
 RELEASE_ROOT = CODE_ROOT.parent
-PROJECT_ROOT = CODE_ROOT / "DCASE_CODE_V2"
+PROJECT_ROOT = CODE_ROOT / "base"
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -31,7 +32,7 @@ from models.domain_net import MCnn14  # noqa: E402
 
 ROOT = MAINLINE_ROOT
 RAW_ROOT = RELEASE_ROOT / "data"
-AUG_ROOT = ROOT / "processed_aug"
+AUG_ROOT = RAW_ROOT / "processed_aug"
 CKPT_ROOT = RELEASE_ROOT / "checkpoints" / "official"
 RUN_ROOT = ROOT / "runs"
 
@@ -161,6 +162,9 @@ def resolve_checkpoint(path_text: str) -> Path:
     path = Path(path_text)
     if path.exists():
         return path
+    root_path = ROOT / path_text
+    if root_path.exists():
+        return root_path
     ckpt_path = CKPT_ROOT / path_text
     if ckpt_path.exists():
         return ckpt_path
@@ -294,7 +298,14 @@ def main() -> None:
     best_metric = -1.0
     last_path = run_dir / "last.pth"
     if args.resume and last_path.exists():
-        ckpt = torch.load(last_path, map_location=device)
+        try:
+            ckpt = torch.load(last_path, map_location=device)
+        except Exception as exc:
+            best_path = run_dir / "best.pth"
+            if not best_path.exists():
+                raise
+            print(f"warning: failed to load {last_path}: {exc}; falling back to {best_path}", flush=True)
+            ckpt = torch.load(best_path, map_location=device)
         model.load_state_dict(ckpt["model_state_dict"])
         optimizer.load_state_dict(ckpt["optimizer_state_dict"])
         scheduler.load_state_dict(ckpt["scheduler_state_dict"])
@@ -348,10 +359,11 @@ def main() -> None:
         "final_epoch": int(ckpt["epoch"]),
         "best_chunk_domain_acc": float(ckpt["best_metric"]),
     }
-    for eval_domain, (wav_dir, csv_path, eval_task_id) in TESTS.items():
+    metrics_out["eval_mode"] = "fixed_model_task"
+    for eval_domain, (wav_dir, csv_path, _eval_task_id) in TESTS.items():
         if wav_dir.exists() and csv_path.exists():
             metrics_out[f"{eval_domain}_wav"] = eval_wavlevel(
-                model, wav_dir, csv_path, device, eval_task_id, name=f"{args.method}:{eval_domain}", no_progress=args.no_progress
+                model, wav_dir, csv_path, device, args.task_id, name=f"{args.method}:{eval_domain}", no_progress=args.no_progress
             )
     if "D2_wav" in metrics_out and "D3_wav" in metrics_out:
         metrics_out["avg_D2_D3_wav_official_acc"] = (

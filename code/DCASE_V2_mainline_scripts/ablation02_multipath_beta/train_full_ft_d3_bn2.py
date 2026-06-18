@@ -22,7 +22,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 MAINLINE_ROOT = SCRIPT_DIR.parent
 CODE_ROOT = MAINLINE_ROOT.parent
 RELEASE_ROOT = CODE_ROOT.parent
-PROJECT_ROOT = CODE_ROOT / "DCASE_CODE_V2"
+PROJECT_ROOT = CODE_ROOT / "base"
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -30,7 +30,7 @@ from configs.CFG_PATH import CFG  # noqa: E402
 from models.domain_net import MCnn14  # noqa: E402
 
 RAW_ROOT = RELEASE_ROOT / "data"
-AUG_ROOT = MAINLINE_ROOT / "processed_aug"
+AUG_ROOT = RAW_ROOT / "processed_aug"
 CKPT_ROOT = RELEASE_ROOT / "checkpoints" / "official"
 RUN_ROOT = MAINLINE_ROOT / "runs"
 

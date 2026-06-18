@@ -49,5 +49,3 @@ The official `eval/` folder does not need labels or metadata for inference.
 - Format: `.wav`
 - Sample rate: 32 kHz
 - Channels: mono is preferred; stereo is averaged to mono by the loaders
-
-The same layout is summarized in the top-level `README.md`.

@@ -25,8 +25,8 @@ New-Item -ItemType Directory -Path $RunDir -Force | Out-Null
 
 Push-Location $Root
 try {
-    & $Python -m py_compile "scripts\eval_final_inference_ablation.py"
-    & $Python "scripts\eval_final_inference_ablation.py" `
+    & $Python -m py_compile "ablation03_inference_window\eval_final_inference_ablation.py"
+    & $Python "ablation03_inference_window\eval_final_inference_ablation.py" `
         --checkpoint $Checkpoint `
         --out-name $Out `
         --task-id 2 `

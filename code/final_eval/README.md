@@ -25,7 +25,7 @@ The script resolves these paths from its own location, so the repository can be 
 filename.wav    class_label
 ```
 
-
+This fixed `task_id = 2` setting is for the official unlabeled eval-set submission with the final D3 dictionary. It is separate from D2/D3 development-set analyses that compare different BN/task-id evaluation protocols.
 
 ## Run
 

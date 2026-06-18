@@ -19,6 +19,8 @@ data/**
 !checkpoints/ours/.gitkeep
 
 # Generated inference outputs and logs.
+code/final_eval/submission/*/*.output.csv
+code/final_eval/submission/*/*.partial
 code/final_eval/submission/*/*_manifest.json
 code/final_eval/submission/*/*_preview.csv
 code/DCASE_V2_mainline_scripts/runs/

@@ -30,9 +30,9 @@ fi
 
 mkdir -p "runs/${OUT}"
 
-"${PY}" -m py_compile scripts/eval_final_inference_ablation.py
+"${PY}" -m py_compile ablation03_inference_window/eval_final_inference_ablation.py
 
-"${PY}" scripts/eval_final_inference_ablation.py \
+"${PY}" ablation03_inference_window/eval_final_inference_ablation.py \
   --checkpoint "${CHECKPOINT}" \
   --out-name "${OUT}" \
   --task-id 2 \

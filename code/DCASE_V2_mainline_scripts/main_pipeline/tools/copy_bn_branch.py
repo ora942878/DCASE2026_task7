@@ -10,11 +10,12 @@ import torch
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-ROOT = SCRIPT_DIR.parent
+PIPELINE_ROOT = SCRIPT_DIR.parent
+ROOT = PIPELINE_ROOT.parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from train_full_ft_d3_bn2 import CKPT_ROOT, load_state_dict  # noqa: E402
+from train_stage_path import CKPT_ROOT, load_state_dict  # noqa: E402
 
 
 BN_TASK_PATTERN = re.compile(r"(^bn0|\.bnF|\.bnS)\.(\d)\.")
